@@ -3,4 +3,23 @@ layout: default
 title:  Proposal
 ---
 
-**ADD STUFF HERE**
+## Project Summary
+
+
+
+## Project Goals
+
+
+
+## AI/ML Algorithms
+
+
+
+## Evaluation Plan
+
+
+
+## AI Tool Usage
+
+
+
