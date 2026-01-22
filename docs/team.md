@@ -6,11 +6,11 @@ title:  Team
 # {{ page.title }}
 
 
-## USER 1
-***UCI Net ID***: ucinetid1
+## Ethan Kosaki
+***UCI Net ID***: ekosaki
 
-## USER 2
-***UCI Net ID***: ucinetid2
+## Erick Ahumada
+***UCI Net ID***: ahumada1357
 
-## USER 3
-***UCI Net ID***: ucinetid3
+## Ryan Sahyoun
+***UCI Net ID***: sahyounr
