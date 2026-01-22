@@ -18,8 +18,7 @@ Our realistic goal is to create a simulation that models cars and pedestrians ar
 Our moonshot goal is to create a simulation that models cars and pedestrians arriving at an n-way traffic light controlled intersection over the course of a week. This intersection could have 1-way streets, or even be a 6-way intersection. Based on any situation, our AI algorithm would continually learn and optimize the light schedule and crossing schedule for each direction.
 
 ## AI/ML Algorithms
-
-
+Tentatively, we will use Proximal Policy Optimization (PPO), a model-free, on-policy reinforcement learning algorithm with a neural network function approximator.
 
 ## Evaluation Plan
 Quantitative Eval: For evaluating the success of our AI traffic signal system, we will conduct experiments comparing our AI-based approach against several baseline methods. Our primary metric will be the average total wait time per vehichle across all lanes at the intersection, measured over different lengths of time. Some naive approaches we will use as our baselines will consist of, a fixed time signal that cycles through each direction on equal intervals, a time of day based system that will change its cycle depending on rush hour traffic or very small traffic, and a basic sensor-reactive system that will keep a green light on if it detects a long queue of cars. We will run multiple simulations against all 3 with different envioenrment variables, such as number of intersections, allowing pedestrians, and increasing the queue of cars. For our AI, we hope to reduce wait time against all 3 of these baselines. Against the fixed cycle, we hope to see the highest decrease in wait time with around 30%. However against the other two baselines since they are reactive to different variables, we hope our AI will perform around 10-20% better.
