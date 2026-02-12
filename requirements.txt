@@ -1,2 +1,4 @@
 traci
 sumolib
+numpy
+torch
