@@ -227,7 +227,7 @@ def run_episode(agent, training=True):
 def main():
     print("Running baseline (fixed 200-step toggle)...")
     baseline_wait = run_baseline()
-    print(f"Baseline: {baseline_wait:.2f}s total | {baseline_wait / 400:.2f}s per car\n")
+    print(f"Baseline: {baseline_wait:.2f}s total | {baseline_wait / 520:.2f}s per car\n")
 
     agent = PPOAgent()
 
@@ -237,7 +237,7 @@ def main():
         pct = ((baseline_wait - ep_wait) / baseline_wait) * 100
         print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
               f"Wait: {ep_wait:>10.2f}s | "
-              f"Per car: {ep_wait / 400:>7.2f}s | "
+              f"Per car: {ep_wait / 520:>7.2f}s | "
               f"vs Baseline: {pct:>+6.1f}%")
 
     print("\nFinal evaluation (no training)...")
@@ -246,8 +246,8 @@ def main():
 
     print(f"\n{'=' * 60}")
     print(f"RESULTS")
-    print(f"  Baseline:    {baseline_wait:>12.2f}s  ({baseline_wait / 400:.2f}s/car)")
-    print(f"  PPO Agent:   {eval_wait:>12.2f}s  ({eval_wait / 400:.2f}s/car)")
+    print(f"  Baseline:    {baseline_wait:>12.2f}s  ({baseline_wait / 520:.2f}s/car)")
+    print(f"  PPO Agent:   {eval_wait:>12.2f}s  ({eval_wait / 520:.2f}s/car)")
     print(f"  Improvement: {improvement:>+11.1f}%")
     print(f"  Target:              30%")
     print(f"{'=' * 60}")

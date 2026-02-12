@@ -150,7 +150,7 @@ def run_baseline():
     print(f"\n{'='*70}")
     print(f"BASELINE RESULTS:")
     print(f"  Total Wait Time: {cumulative_wait_time:.2f} seconds")
-    print(f"  Avg per car:     {cumulative_wait_time/400:.2f} seconds")
+    print(f"  Avg per car:     {cumulative_wait_time/520:.2f} seconds")
     print(f"{'='*70}\n")
     
     env.close()
@@ -206,7 +206,7 @@ def run_your_ai():
     print(f"\n{'='*70}")
     print(f"YOUR AI RESULTS:")
     print(f"  Total Wait Time: {cumulative_wait_time:.2f} seconds")
-    print(f"  Avg per car:     {cumulative_wait_time/400:.2f} seconds")
+    print(f"  Avg per car:     {cumulative_wait_time/520:.2f} seconds")
     print(f"{'='*70}\n")
     
     env.close()

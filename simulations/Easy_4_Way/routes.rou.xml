@@ -6,8 +6,18 @@
     <route id="e_w" edges="EI IW"/>
     <route id="w_e" edges="WI IE"/>
 
+    <route id="n_e" edges="NI IE"/>
+    <route id="s_w" edges="SI IW"/>
+    <route id="e_s" edges="EI IS"/>
+    <route id="w_n" edges="WI IN"/>
+
     <flow id="flow_ns" type="car" route="n_s" begin="0" end="1000" number="100" departLane="best"/>
     <flow id="flow_sn" type="car" route="s_n" begin="0" end="1000" number="100" departLane="best"/>
     <flow id="flow_ew" type="car" route="e_w" begin="0" end="1000" number="100" departLane="best"/>
     <flow id="flow_we" type="car" route="w_e" begin="0" end="1000" number="100" departLane="best"/>
+
+    <flow id="flow_ne" type="car" route="n_e" begin="0" end="1000" number="30" departLane="best"/>
+    <flow id="flow_sw" type="car" route="s_w" begin="0" end="1000" number="30" departLane="best"/>
+    <flow id="flow_es" type="car" route="e_s" begin="0" end="1000" number="30" departLane="best"/>
+    <flow id="flow_wn" type="car" route="w_n" begin="0" end="1000" number="30" departLane="best"/>
 </routes>
