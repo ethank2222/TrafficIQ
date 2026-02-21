@@ -37,3 +37,19 @@ body > .container {
 code {
   font-size: 80%;
 }
+
+.team-photo {
+  display: block;
+  width: 140px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 10px 0;
+}
+
+.home-image {
+  display: block;
+  width: 520px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 18px 0;
+}

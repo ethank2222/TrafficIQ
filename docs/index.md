@@ -19,12 +19,12 @@ Reports:
 
 **Example Training Run**
 
-![Example Training Run](./assets/images/training_progress.png)
+<img src="./assets/images/training_progress.png" alt="Example Training Run" class="home-image">
 
 **Example Training Run**
 
-![Our Hyperparameters](./assets/images/setting_hyperparameters.png)
+<img src="./assets/images/setting_hyperparameters.png" alt="Our Hyperparameters" class="home-image">
 
 **Runtime Logging/Messages**
 
-![Runtime Logging/Messages](./assets/images/run_messages.png)
+<img src="./assets/images/run_messages.png" alt="Runtime Logging/Messages" class="home-image">
