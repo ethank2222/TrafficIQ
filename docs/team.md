@@ -7,16 +7,16 @@ title:  Team
 
 
 ## Ethan Kosaki
-![Ethan Kosaki](../ethan.jpg)
-***UCI Net ID***: ekosaki
-***GitHub***: [ekosaki](https://github.com/ethank2222)
+![Ethan Kosaki](./assets/images/ethan.jpg)
+**UCI Net ID**: ekosaki  
+**GitHub**: [Ethan Kosaki](https://github.com/ethank2222)
 
 ## Erick Ahumada
-![Ethan Kosaki](../ethan.jpg)
-***UCI Net ID***: ahumada1357
-***GitHub***: [ekosaki](https://github.com/ahumada04)
+![Erick Ahumada](./assets/images/erick.jpg)
+**UCI Net ID**: ahumada1357  
+**GitHub**: [Erick Ahumada](https://github.com/ahumada04)
 
 ## Ryan Sahyoun
-![Ethan Kosaki](../ethan.jpg)
-***UCI Net ID***: sahyounr
-***GitHub***: [ekosaki](https://github.com/rsahyoun)
+![Ryan Sahyoun](./assets/images/ryan.jpg)
+**UCI Net ID**: sahyounr  
+**GitHub**: [Ryan Sahyoun](https://github.com/rsahyoun)
