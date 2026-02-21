@@ -4,11 +4,11 @@
 <neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
 
     <input>
-        <sumo-net-file value="C:\Users\Ahuma\Desktop\CS175\project-ree\simulations\E_CROSS_2WAY.net.xml"/>
+        <sumo-net-file value="C:\Users\Ahuma\Desktop\CS175\TrafficIQ\simulations\E_CROSS_2WAY.net.xml"/>
     </input>
 
     <output>
-        <output-file value="C:\Users\Ahuma\Desktop\CS175\project-ree\simulations\E_CROSS_2WAY.net.xml"/>
+        <output-file value="C:\Users\Ahuma\Desktop\CS175\TrafficIQ\simulations\E_CROSS_2WAY.net.xml"/>
     </output>
 
     <processing>

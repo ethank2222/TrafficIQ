@@ -36,7 +36,7 @@ python run_sim.py
 ## 📁 Project Structure
 
 ```
-project-ree/
+TrafficIQ/
 ├── simulations/
 │   └── Easy_4_Way/          # 4-way intersection scenario
 │       ├── map.net.xml      # Road network definition

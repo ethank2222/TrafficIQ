@@ -11,7 +11,7 @@ An AI traffic controller that **minimizes total car wait times** at a 4-way inte
 ## 📁 Essential Files (What to Keep)
 
 ```
-project-ree/
+TrafficIQ/
 ├── run_sim.py                      # Basic simulation (from Erick)
 ├── ai_traffic_controller_template.py  # Template for our AI
 ├── simulations/Easy_4_Way/         # Traffic scenario files
