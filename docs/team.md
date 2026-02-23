@@ -15,7 +15,7 @@ title:  Team
 ## Erick Ahumada
 <img src="./assets/images/erick.jpg" alt="Erick Ahumada" class="team-photo">
 
-**UCI Net ID**: ahumada1357  
+**UCI Net ID**: ahumadae  
 **GitHub**: [Erick Ahumada](https://github.com/ahumada04)
 
 ## Ryan Sahyoun
