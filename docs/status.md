@@ -2,7 +2,6 @@
 layout: default
 title: Status
 ---
-
 <div style="text-align: center; margin: 20px 0;">
   <iframe width="560" height="315" src="https://www.youtube.com/embed/IBpHKF4D9oY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
@@ -53,7 +52,7 @@ To evaluate TrafficIQ's performance, we compare total accumulated vehicle waitin
 Our PPO agent achieves a moderate improvement over the baseline, reducing total accumulated waiting time by ~28.3%. While this falls short of the 30% target set at the outset, it demonstrates that the agent has meaningfully learned to respond to traffic conditions rather than simply replicating fixed-interval behavior. Figure 1 shows the training progress curve across all 100 episodes, plotting per-episode improvement against the baseline alongside a 10-episode moving average to surface the underlying trend. The curve shows a noisy centered near our goal of 30%. This shows that, between episodes, we are takeing drastic steps that can, at times, destroy the model. More Analysis is needed but reducing or $\epsilon = 0.2 \rightarrow \epsilon = 0.1$ may aid in reducing this high variability. 
 
 <img src="./assets/images/training_progress.png" alt="Training Peformance Graph" class="home-image">
-*Figure 1*
+Figure 1
 
 It is worth noting that the baseline used here is intentionally simple, which makes it a low bar for comparison. A more rigorous future evaluation would benchmark against a more sophisticated fixed-timer controller such as Webster's method, which optimizes phase timings analytically based on traffic flow theory. This would provide a stronger and more meaningful point of comparison, and would better isolate the contribution of learned adaptive behavior over well-engineered deterministic control.
 
