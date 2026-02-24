@@ -13,3 +13,19 @@ What it does:
 - If currently N-S green (phase 0) → switch to E-W green (phase 2)
 - If currently E-W green (phase 2) → switch to N-S green (phase 0)
 - Completely ignores traffic conditions (no sensors, no intelligence)
+
+
+## TASKS
+
+### Ethan
+- Update hyperparameters of PPO Model to help model converge
+    - Ex: $\epsilon = 0.2 \rightarrrow \epsilon = 0.1$ 
+        - might help with huge steps ruining the model at times
+
+### Ryan
+- Update action space of model for **turn signals** and **pedestrian crossing**
+    - Mostly looking into SUMO and traci documenation probs
+
+### Erick
+- Create new evaluation model
+    - Websters will most likely be best
