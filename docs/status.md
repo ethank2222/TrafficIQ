@@ -3,6 +3,10 @@ layout: default
 title: Status
 ---
 
+<div style="text-align: center; margin: 20px 0;">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/IBpHKF4D9oY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ## Project Summary
 **TrafficIQ** is an intelligent traffic light system designed to minimize car idle times at intersections and reduce traffic congestion. The system takes in the number of halted vehicles, average vehicle length, and cumulative waiting time for each of the four approach lanes (North, South, East, West), along with the current traffic light phase and simulation time. Given this information, it decides whether to keep or switch the active green direction (North/South vs. East/West).
 
