@@ -19,17 +19,43 @@ The simulation environment is provided by SUMO (Simulation of Urban MObility), a
 
 <img src="./assets/images/sumo.png" alt="SUMO Simulation Example" class="home-image">
 
-
-The 14-dimensional state vector is fed into an Actor-Critic neural network consisting of two shared hidden layers followed by two separate output heads. The shared layers are fully connected, each with 64 neurons, and use a Tanh activation function. Tanh is preferred here over alternatives such as ReLU because it is zero-centered and bounded between (-1, 1), producing smoother, more stable gradients, a meaningful advantage when the critic must estimate values that may be positive or negative (in our case strictly negative). These shared layers act as a common feature extractor, allowing both the actor and critic to learn from the same intermediate representation rather than maintaining entirely separate networks, which encourages complementary learning between the two heads.
+The 14-dimensional state vector is fed into an Actor-Critic neural network consisting of two shared hidden layers followed by two separate output heads. The shared layers are fully connected, each with 64 neurons, and use a Tanh activation function. Tanh is preferred here over alternatives such as ReLU because it is zero-centered and bounded between (-1, 1), producing smoother, more stable gradients, a meaningful advantage when the critic must estimate values that may be positive or negative (in our case strictly negative). These shared layers act as a common feature extractor, allowing both the actor and critic to learn from the same intermediate representation rather than maintaining entirely separate networks, which encourages complementary learning between the two heads. 
 
 The actor head is a single linear layer mapping from 64 neurons to 2 outputs: one logit per possible action. These logits are passed to a Categorical distribution, which converts them into action probabilities internally. The critic head is similarly a single linear layer, mapping from 64 neurons to a single scalar output representing V(s): the estimated expected discounted return from the current state.
 
-**EXPAND FURTHER DETAILS OVER DISCOUNTED EQUATION & LOSS OVERVIEW**
+The agent is trained by optimizating a loss function aggregating three components: clipped actor (policy) loss, critic (value) loss, and an entropy bonus. 
+
+The actor loss is defined by PPO's clipped surrogate objective, built from two core components: a probability ratio and an advantage estimate. The probability ratio
+$$rt(θ)=πθ(at∣st)/πθold(at∣st)$$
+measures how much the current policy has shifted relative to the policy that originally collected the data. The advantage estimate $\hat{A}_t$ measures whether a taken action performed better or worse than expected. In our implementation this is simplified relative to full GAE, we compute a Monte Carlo discounted return and subtract the critic's value estimate as a baseline: 
+$$A^t=Rt−V(st)\hat{A}_t = R_t - V(s_t) A^t​=Rt​−V(st​).$$
+
+The final actor loss takes the minimum of the unclipped and clipped ratio, each weighted by the advantage, and computes an expectation over the collected trajectory:
+
+$$L^{\text{CLIP}}(\theta) = \hat{\mathbb{E}}_t \left[ \min \left( r_t(\theta) \hat{A}_t,\ \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_t \right) \right]$$
+
+Taking the minimum acts as a pessimistic bound, the policy is only allowed to benefit from updates that stay within the trust region defined by the clip, preventing large, destructive policy shifts in a single update. We use $\epsilon = 0.2$ and educate the formulas provided above following the work in *Proximal Policy Optimization Algorithms* (2017) [Schulman et al., 2017](https://arxiv.org/pdf/1707.06347).
+
+The critic loss, in comparison, is much simpler. It is derived by the MSE between predicted state value and observed discounted return. This discounted return calcuated via $R = r * 0.9 * R * (1-d)$. We utalize a **GAMMA** of 0.99 as to heavily incentivies future rewards as apposed to immediate ones. This is 
+
+$$(returns - new~values)^2$$
+
+The entropy bonus is drawn from information theory, measuring the uncertainty of the current policy's action distribution: $H[\pi_\theta] = -\sum_a \pi_\theta(a|s) \log \pi_\theta(a|s)
+$. A higher entropy indicates a more exploratory, less deterministic policy. Including it in the loss encourages the agent to maintain exploration and avoid premature convergence.
+
+These three terms combine into a single unified loss:
+$$actor~loss + 0.5 * critic~loss - 0.01 * entropy$$
+We use a value coefficient of $c_1 = 0.5$ to prevent the critic loss from dominating the actor loss during optimization, and an entropy coefficient of $c_2 = 0.01$ to sustain sufficient exploration without destabilizing the policy.
+
+The agent is trained entirely online through direct interaction with the SUMO simulation, with a singular 4-way intersection simulation. Each training episode runs until all vehicles have cleared the intersection, approximately 520 vehicles per episode, making episode length variable rather than fixed. Over the course of 100 training episodes, the agent collects trajectory data on-policy, meaning experience is gathered under the current policy and discarded after each update. This is a fundamental property of PPO. At the end of each episode, the accumulated trajectory is used to perform 4 gradient update passes (epochs) over the same batch before the buffer is cleared for the next episode. In total, the agent therefore performs 400 gradient updates across training. Decisions are made every 10 simulation steps, meaning each episode produces roughly 520 stored transitions depending on traffic throughput and signal timing.
 
 ## Evaluation
+TASK:
+
 An important aspect of your project, as we mentioned in the beginning, is evaluating your project. Be clear and precise about describing the evaluation setup, for both quantitative and qualitative results. Present the results to convince the reader that you have a working implementation. Use plots, charts, tables, screenshots, figures, etc. as appropriate. For each type of evaluation that you perform, you’ll probably need at least 1 or 2 paragraphs (excluding figures etc.) to describe it.
 
-**CURENTLY** 
+RESPONSE:
+
 To evaluate model peformance, we utalize a simple % difference between
 - algorithmic comparison
     -  very basic,
@@ -47,6 +73,7 @@ In a couple of paragraphs, describe your goals for the remainder of the quarter.
 ## Resources Used
 Mention all the resources that you found useful in implementing your method, experiments, and analysis. This should include everything like code documentation, AI/ML libraries, source code that you used, StackOverflow, etc. You do not have to include every tiny (or commonplace) thing you used, but it is important to report the sources that are crucial to your project. One aspect that does need to be comprehensive is a description of any use you made of AI tools
 
-We utilized <a href="https://sumo.dlr.de/docs/index.html">SUMO documentation</a> to aid initial setup of our intersection enviornment as well as for our light system interface. In addition 
+We utilized <a href="https://sumo.dlr.de/docs/index.html">SUMO documentation</a> to aid initial setup of our intersection enviornment as well as for our light system interface. In addition we utalize PyTorch, 
 
-- ADD GITHUB LINK FOR OTHER SUMO PROJ
+<a href="https://github.com/Navtegh/Traffic-Light-Management-system-using-RL-and-SUMO
+">OTHER LIGHT CONTROL SYSTEM</a> 
