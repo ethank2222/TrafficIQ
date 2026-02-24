@@ -52,6 +52,7 @@ Our PPO agent achieves a moderate improvement over the baseline, reducing total 
 *Figure 1*
 
 It is worth noting that the baseline used here is intentionally simple, which makes it a low bar for comparison. A more rigorous future evaluation would benchmark against a more sophisticated fixed-timer controller such as Webster's method, which optimizes phase timings analytically based on traffic flow theory. This would provide a stronger and more meaningful point of comparison, and would better isolate the contribution of learned adaptive behavior over well-engineered deterministic control.
+
 ## Remaining Goals and Challenge
 Our most immediate goal for the remainder of the quarter is strengthening the evaluation framework. As noted in the Evaluation section, our current baseline is a naive fixed-timer controller, which represents a low bar for comparison. We plan to implement a more sophisticated benchmark, such as Webster's method, which analytically optimizes phase timings based on observed traffic flow. Comparing against this would provide a more meaningful measure of what adaptive, learned behavior actually contributes over well-engineered deterministic control, and would better inform where the model is succeeding and where it still falls short.
 
@@ -62,7 +63,8 @@ Our stretch goal is multi-intersection communication, training agents across a n
 ## Resources Used
 Mention all the resources that you found useful in implementing your method, experiments, and analysis. This should include everything like code documentation, AI/ML libraries, source code that you used, StackOverflow, etc. You do not have to include every tiny (or commonplace) thing you used, but it is important to report the sources that are crucial to your project. One aspect that does need to be comprehensive is a description of any use you made of AI tools
 
-We utilized <a href="https://sumo.dlr.de/docs/index.html">SUMO documentation</a> to aid initial setup of our intersection enviornment as well as for our light system interface. In addition we utalize PyTorch, 
+We utilized <a href="https://sumo.dlr.de/docs/index.html">SUMO documentation</a> to aid initial setup of our intersection enviornment as well as for our light system interface. In addition we utalize documenation for PyTorch and Numpy. Our team as well leveraged online video tutorials present on Youtube.
 
-<a href="https://github.com/Navtegh/Traffic-Light-Management-system-using-RL-and-SUMO
-">OTHER LIGHT CONTROL SYSTEM</a> 
+Our team made substantial use of large language models, primarily Claude and Gemini, across three areas of the project. First, during model development, LLMs were used as a sanity check, helping verify our understanding of PPO concepts and clarifying unfamiliar ideas as they arose. Second, LLMs were used to generate template code that was then reviewed and tailored to the specific needs of our implementation. Third, a significant portion of this written documentation was refined with LLM assistance, including grammar and clarity edits and generation of LaTeX equations where appropriate.
+
+In the future we hope to leverage the work of *Navtegh* and his github repository <a href="https://github.com/Navtegh/Traffic-Light-Management-system-using-RL-and-SUMO">Traffic-Light-Management-system-using-RL-and-SUMO</a>. This will provide invaluable insight in training our initial model and how to further push its complexity.
