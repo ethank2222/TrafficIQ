@@ -1,5 +1,6 @@
 import os
 import sys
+import math
 import numpy as np
 import torch
 import torch.nn as nn
@@ -25,7 +26,7 @@ YELLOW_DURATION = 3
 NUM_EPISODES = 100
 GAMMA = 0.99
 LR = 3e-4
-CLIP_EPS = 0.2
+CLIP_EPS = 0.15
 PPO_EPOCHS = 4
 ENTROPY_COEF = 0.01
 VALUE_COEF = 0.5
@@ -164,6 +165,99 @@ def run_baseline():
     return total_wait
 
 
+def run_webster():
+    MAX_STEP = 3600
+    traci.start(["sumo", "-c", CONFIG_PATH])
+    step = 0
+
+    edges = set(traci.edge.getIDList())
+    tls = traci.trafficlight.getIDList()
+
+    L = 8  # lost time because 2*4
+    fixed_flow = 1850
+
+    north_flow = []
+    south_flow = []
+    east_flow = []
+    west_flow = []
+    nf_count = []
+    sf_count = []
+    ef_count = []
+    wf_count = []
+
+    nextCycle = []
+    for tl in tls:
+        north_flow.append(0)
+        south_flow.append(0)
+        east_flow.append(0)
+        west_flow.append(0)
+        nf_count.append(set())
+        sf_count.append(set())
+        ef_count.append(set())
+        wf_count.append(set())
+        nextCycle.append(42)
+    # total_wait
+    sumWait = 0
+    total_vehs = 0
+
+    while traci.simulation.getMinExpectedNumber() > 0 and step <= MAX_STEP:
+        step += 1
+        for tl in range(len(tls)):
+            GNS = 0
+            GEW = 0
+            flowLanes = sorted(set(traci.trafficlight.getControlledLanes(tls[tl])))
+
+            if step == nextCycle[tl]:
+                east_flow[tl] = len(ef_count[tl]) * MAX_STEP / step
+                north_flow[tl] = len(nf_count[tl]) * MAX_STEP / step
+                south_flow[tl] = len(sf_count[tl]) * MAX_STEP / step
+                west_flow[tl] = len(wf_count[tl]) * MAX_STEP / step
+
+                sat_north = north_flow[tl] / fixed_flow
+                sat_south = south_flow[tl] / fixed_flow
+                sat_east = east_flow[tl] / fixed_flow
+                sat_west = west_flow[tl] / fixed_flow
+
+                maxOfNS = max(sat_north, sat_south, 0.001)
+                maxOfEW = max(sat_east, sat_west, 0.001)
+                sumOfAllSats = maxOfNS + maxOfEW
+                d = min(42, (1.5 * L + 5) / (1 - sumOfAllSats))
+                GNS += (maxOfNS / sumOfAllSats) * (d - L)
+                GEW += (maxOfEW / sumOfAllSats) * (d - L)
+                nextCycle[tl] += math.ceil(d)
+
+                for e in edges:
+                    edgeOcc = traci.edge.getLastStepOccupancy(e)
+                    if edgeOcc >= 0.9:
+                        if e[0] == 'n' or e[0] == 's':
+                            if e[0] == 'e' or e[0] == 'w':
+                                continue
+                            traci.trafficlight.setPhase(tls[tl], 0)
+                        else:
+                            traci.trafficlight.setPhase(tls[tl], 2)
+
+                traci.trafficlight.setPhase(tls[tl], 2)
+                traci.trafficlight.setPhaseDuration(tls[tl], math.ceil(GEW))
+                traci.trafficlight.setPhase(tls[tl], 0)
+                traci.trafficlight.setPhaseDuration(tls[tl], math.ceil(GNS))
+
+            ef_count[tl] = ef_count[tl].union(traci.lane.getLastStepVehicleIDs(flowLanes[0]))
+            nf_count[tl] = nf_count[tl].union(traci.lane.getLastStepVehicleIDs(flowLanes[1]))
+            sf_count[tl] = sf_count[tl].union(traci.lane.getLastStepVehicleIDs(flowLanes[2]))
+            wf_count[tl] = wf_count[tl].union(traci.lane.getLastStepVehicleIDs(flowLanes[3]))
+
+        for e in edges:
+            vehsNow = traci.edge.getLastStepVehicleIDs(e)
+            for id in vehsNow:
+                sumWait += traci.vehicle.getWaitingTime(id)
+                total_vehs += 1
+
+        traci.simulationStep()
+
+    traci.close()
+    return sumWait
+
+
 def run_episode(agent, training=True):
     traci.start(["sumo", "-c", CONFIG_PATH])
 
@@ -225,39 +319,9 @@ def run_episode(agent, training=True):
     return total_wait
 
 
-def main():
-    print("Running baseline (fixed 200-step toggle)...")
-    baseline_wait = run_baseline()
-    print(f"Baseline: {baseline_wait:.2f}s total | {baseline_wait / 520:.2f}s per car\n")
-
-    agent = PPOAgent()
-    episode_improvements = []
-
-    print(f"Training PPO agent for {NUM_EPISODES} episodes...\n")
-    for ep in range(NUM_EPISODES):
-        ep_wait = run_episode(agent, training=True)
-        pct = ((baseline_wait - ep_wait) / baseline_wait) * 100
-        episode_improvements.append(pct)
-        print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
-              f"Wait: {ep_wait:>10.2f}s | "
-              f"Per car: {ep_wait / 520:>7.2f}s | "
-              f"vs Baseline: {pct:>+6.1f}%")
-
-    print("\nFinal evaluation (no training)...")
-    eval_wait = run_episode(agent, training=False)
-    improvement = ((baseline_wait - eval_wait) / baseline_wait) * 100
-
-    print(f"\n{'=' * 60}")
-    print(f"RESULTS")
-    print(f"  Baseline:    {baseline_wait:>12.2f}s  ({baseline_wait / 520:.2f}s/car)")
-    print(f"  PPO Agent:   {eval_wait:>12.2f}s  ({eval_wait / 520:.2f}s/car)")
-    print(f"  Improvement: {improvement:>+11.1f}%")
-    print(f"  Target:              30%")
-    print(f"{'=' * 60}")
-
-    torch.save(agent.network.state_dict(), "ppo_traffic_model.pt")
-    print("\nModel saved to ppo_traffic_model.pt")
-
+# Code pulled from: https://github.com/AArdaNalbant/Traffic-Signal-Modification-with-Webster-Method/blob/master/traffic_light_management_system/runner.py#L168
+# Modified to function soley for inference
+def plot_results(episode_improvements, improvement, benchmark: str):
     # Plot learning curve
     plt.figure(figsize=(10, 6))
     plt.plot(range(1, NUM_EPISODES + 1), episode_improvements, alpha=0.3, label='Raw Episodes')
@@ -265,22 +329,72 @@ def main():
     # Add moving average to show trend
     window = min(10, NUM_EPISODES // 5)
     if NUM_EPISODES >= window:
-        moving_avg = []
+        moving_avg_b = []
+        moving_avg_w = []
         for i in range(len(episode_improvements)):
             start = max(0, i - window + 1)
-            moving_avg.append(np.mean(episode_improvements[start:i+1]))
-        plt.plot(range(1, NUM_EPISODES + 1), moving_avg, linewidth=2, label=f'{window}-Episode Moving Avg')
+            moving_avg_b.append(np.mean(episode_improvements[start:i+1]))
+        plt.plot(range(1, NUM_EPISODES + 1), moving_avg_b, linewidth=2, label=f'{window}-Episode Moving Avg')
 
     plt.axhline(y=30, color='r', linestyle='--', label='30% Target')
-    plt.axhline(y=improvement, color='g', linestyle='--', label=f'Final Eval: {improvement:.1f}%')
+    plt.axhline(y=improvement, color='g', linestyle='--', label=f'{benchmark} Eval: {improvement:.1f}%')
+
     plt.xlabel('Episode', fontsize=12)
-    plt.ylabel('Improvement vs Baseline (%)', fontsize=12)
+    plt.ylabel(f'Improvement vs {benchmark} (%)', fontsize=12)
     plt.title('PPO Training Progress', fontsize=14, fontweight='bold')
     plt.grid(True, alpha=0.3)
     plt.legend()
     plt.tight_layout()
-    plt.savefig('training_progress.png', dpi=150)
-    print("Training graph saved to training_progress.png")
+    plt.savefig(f'training_progress_{benchmark}.png', dpi=150)
+    print(f"Training graph saved to training_progress_{benchmark}.png")
+
+
+def main():
+    print("Running baseline (fixed 200-step toggle)...")
+    baseline_wait = run_baseline()
+    print(f"Baseline: {baseline_wait:.2f}s total | {baseline_wait / 520:.2f}s per car\n")
+
+    print("Running Websters...")
+    webster_wait = run_webster()
+    print(f"Webster: {webster_wait:.2f}s total | {webster_wait / 520:.2f}s per car\n")
+    
+    agent = PPOAgent()
+    episode_improvements_b = []
+    episode_improvements_w = []
+
+    print(f"Training PPO agent for {NUM_EPISODES} episodes...\n")
+    for ep in range(NUM_EPISODES):
+        ep_wait = run_episode(agent, training=True)
+        pct_b = ((baseline_wait - ep_wait) / baseline_wait) * 100
+        pct_w = ((webster_wait - ep_wait) / webster_wait) * 100
+        episode_improvements_b.append(pct_b)
+        episode_improvements_w.append(pct_w)
+        print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
+              f"Wait: {ep_wait:>10.2f}s | "
+              f"Per car: {ep_wait / 520:>7.2f}s | "
+              f"vs Baseline: {pct_b:>+6.1f}% | "
+              f"vs Webster : {pct_w:>+6.1f}%")
+
+
+    print("\nFinal evaluation (no training)...")
+    eval_wait = run_episode(agent, training=False)
+    improvement_baseline = ((baseline_wait - eval_wait) / baseline_wait) * 100
+    improvement_webster = ((webster_wait - eval_wait) / webster_wait) * 100
+
+    print(f"\n{'=' * 60}")
+    print(f"RESULTS")
+    print(f"  Baseline:    {baseline_wait:>12.2f}s  ({baseline_wait / 520:.2f}s/car)")
+    print(f"  Webster :    {webster_wait:>12.2f}s  ({webster_wait / 520:.2f}s/car)")
+    print(f"  PPO Agent:   {eval_wait:>12.2f}s  ({eval_wait / 520:.2f}s/car)")
+    print(f"  Improvement over Baseline: {improvement_baseline:>+11.1f}%")
+    print(f"  Improvement over Webster : {improvement_webster:>+11.1f}%")
+    print(f"  Target:              30%")
+    print(f"{'=' * 60}")
+
+    torch.save(agent.network.state_dict(), "ppo_traffic_model.pt")
+    print("\nModel saved to ppo_traffic_model.pt")
+    plot_results(episode_improvements_b, improvement_baseline, "baseline")
+    plot_results(episode_improvements_w, improvement_webster, "webster")
 
 
 if __name__ == "__main__":
