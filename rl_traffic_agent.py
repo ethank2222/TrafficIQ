@@ -165,6 +165,8 @@ def run_baseline():
     return total_wait
 
 
+# Code pulled from: https://github.com/AArdaNalbant/Traffic-Signal-Modification-with-Webster-Method/blob/master/traffic_light_management_system/runner.py#L168
+# Modified to function soley for inference
 def run_webster():
     MAX_STEP = 3600
     traci.start(["sumo", "-c", CONFIG_PATH])
@@ -319,8 +321,6 @@ def run_episode(agent, training=True):
     return total_wait
 
 
-# Code pulled from: https://github.com/AArdaNalbant/Traffic-Signal-Modification-with-Webster-Method/blob/master/traffic_light_management_system/runner.py#L168
-# Modified to function soley for inference
 def plot_results(episode_improvements, improvement, benchmark: str):
     # Plot learning curve
     plt.figure(figsize=(10, 6))
