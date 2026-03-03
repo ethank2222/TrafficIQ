@@ -23,10 +23,10 @@ STATE_DIM = 14
 ACTION_DIM = 2
 DECISION_INTERVAL = 10
 YELLOW_DURATION = 3
-NUM_EPISODES = 100
+NUM_EPISODES = 1000
 GAMMA = 0.99
-LR = 3e-4
-CLIP_EPS = 0.15
+LR = 1e-5
+CLIP_EPS = 0.1
 PPO_EPOCHS = 4
 ENTROPY_COEF = 0.01
 VALUE_COEF = 0.5
@@ -165,6 +165,8 @@ def run_baseline():
     return total_wait
 
 
+# Code pulled from: https://github.com/AArdaNalbant/Traffic-Signal-Modification-with-Webster-Method/blob/master/traffic_light_management_system/runner.py#L168
+# Modified to function soley for inference
 def run_webster():
     MAX_STEP = 3600
     traci.start(["sumo", "-c", CONFIG_PATH])
@@ -319,8 +321,6 @@ def run_episode(agent, training=True):
     return total_wait
 
 
-# Code pulled from: https://github.com/AArdaNalbant/Traffic-Signal-Modification-with-Webster-Method/blob/master/traffic_light_management_system/runner.py#L168
-# Modified to function soley for inference
 def plot_results(episode_improvements, improvement, benchmark: str):
     # Plot learning curve
     plt.figure(figsize=(10, 6))
