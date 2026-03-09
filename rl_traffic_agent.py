@@ -260,8 +260,8 @@ def run_webster():
     return sumWait
 
 
-def run_episode(agent, training=True):
-    traci.start(["sumo", "-c", CONFIG_PATH])
+def run_episode(agent, training=True, sumo_config="sumo"):
+    traci.start([sumo_config, "-c", CONFIG_PATH])
 
     step = 0
     total_wait = 0.0
