@@ -2,6 +2,8 @@ import os
 import sys
 import math
 import traci
+import torch
+from rl_traffic_agent import PPOAgent, run_episode
 
 CONFIG_PATH_4_WAY = os.path.join("simulations", "Easy_4_Way", "map.sumocfg")
 # 4-Way Intersection light
@@ -31,6 +33,8 @@ def run_simulation(controller: str):
             baseline(sumo_config)
         case 'webster':
             webster(sumo_config)
+        case 'ai':
+            ai(sumo_config)
         case _:
             print("Not a valid controller")
     sys.stdout.flush()
@@ -146,6 +150,15 @@ def webster(sumo_config='sumo-gui'):
 
     traci.close()
 
+
+def ai(sumo_config='sumo-gui'):
+    model = PPOAgent()
+    modelpath = "model_run002_20260302_233451.pt"
+    state_dict = torch.load(modelpath, map_location=torch.device('cpu'))
+    model.network.load_state_dict(state_dict)  
+    model.network.eval()                        
+    run_episode(agent=model, training=False, sumo_config=sumo_config)
+
 if __name__ == "__main__":
-    run_simulation('webster')
-    run_simulation('baseline')
+    run_simulation('ai')
+    # run_simulation('baseline')

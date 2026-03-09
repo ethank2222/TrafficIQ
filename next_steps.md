@@ -17,15 +17,27 @@ What it does:
 
 ## TASKS
 
-### Ethan
-- Update hyperparameters of PPO Model to help model converge
-    - Ex: $\epsilon = 0.2 \rightarrrow \epsilon = 0.1$ 
-        - might help with huge steps ruining the model at times
+### IMPROVE MODEL
+*Rough Notes from our meeting with Prof. Fox*
+- Intermediate signals for reward
+    - Helps for credit assignment
+- FOCUS ON SHAPING REWARD
+    - can tally all rewards, then give it some difference 
+    - Largely to help shape it
+- Should mimik behavior what we want
+    - i.e not leaving a car in red indefintly so all other cars can pass
+- Choose final hyper parameters
+    - Already have code for this so I can just help pick when we reshape reward (Erick)
 
-### Ryan
-- Update action space of model for **turn signals** and **pedestrian crossing**
-    - Mostly looking into SUMO and traci documenation probs
+--- 
 
-### Erick
-- Create new evaluation model
-    - Websters will most likely be best
+### CREATE SLIDES
+1. Motivation
+2. Problem statement
+3. Approach / method
+4. Results
+5. Discussion / insight
+- Need Video demonstrating our model at work
+    - I can finnish my code to make this easy (Erick)
+- Can copy over a LOT from our status.md
+

@@ -19,16 +19,16 @@ CONFIG_PATH = os.path.join("simulations", "Easy_4_Way", "map.sumocfg")
 TL_ID = "TCenter"
 LANES = ['NI_0', 'SI_0', 'EI_0', 'WI_0']
 
-STATE_DIM = 14
+STATE_DIM = 17
 ACTION_DIM = 2
 DECISION_INTERVAL = 10
 YELLOW_DURATION = 3
 NUM_EPISODES = 100
-GAMMA = 0.99
-LR = 3e-4
-CLIP_EPS = 0.15
+GAMMA = 0.95
+LR = 1e-3
+CLIP_EPS = 0.2
 PPO_EPOCHS = 4
-ENTROPY_COEF = 0.01
+ENTROPY_COEF = 0.02
 VALUE_COEF = 0.5
 
 
@@ -138,11 +138,15 @@ def get_state():
     for lane in LANES:
         state.append(traci.lane.getLastStepHaltingNumber(lane))
     for lane in LANES:
-        state.append(traci.lane.getLastStepLength(lane))
+        # replaced stepLength
+        state.append(traci.lane.getLastStepMeanSpeed(lane))
+    for lane in LANES:
+        # replaced stepLength
+        state.append(traci.lane.getLastStepOccupancy(lane))
     for lane in LANES:
         state.append(traci.lane.getWaitingTime(lane))
     state.append(float(traci.trafficlight.getPhase(TL_ID)))
-    state.append(traci.simulation.getTime())
+    # state.append(traci.simulation.getTime())
     return state
 
 
@@ -260,8 +264,8 @@ def run_webster():
     return sumWait
 
 
-def run_episode(agent, training=True):
-    traci.start(["sumo", "-c", CONFIG_PATH])
+def run_episode(agent, training=True, sumo_config="sumo"):
+    traci.start(["sumo-gui", "-c", CONFIG_PATH])
 
     step = 0
     total_wait = 0.0
