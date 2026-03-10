@@ -151,6 +151,11 @@ class PPOAgent:
 
         advantages = returns - old_values
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        
+        # Diagnostic: Track learning metrics
+        self.last_value_loss = None
+        self.last_policy_loss = None
+        self.last_entropy = None
 
         for _ in range(PPO_EPOCHS):
             new_log_probs, new_values, entropy = self.network.evaluate(states, actions)
@@ -169,6 +174,11 @@ class PPOAgent:
             loss.backward()
             nn.utils.clip_grad_norm_(self.network.parameters(), 0.5)
             self.optimizer.step()
+            
+            # Store last epoch's losses for diagnostics
+            self.last_policy_loss = actor_loss.item()
+            self.last_value_loss = critic_loss.item()
+            self.last_entropy = entropy_bonus.item()
 
         self.states.clear()
         self.actions.clear()
@@ -176,6 +186,14 @@ class PPOAgent:
         self.rewards.clear()
         self.values.clear()
         self.dones.clear()
+    
+    def get_action_distribution(self, state):
+        """Get probability distribution over actions for a given state"""
+        state_t = torch.FloatTensor(state).unsqueeze(0)
+        with torch.no_grad():
+            logits, _ = self.network(state_t)
+            probs = torch.softmax(logits, dim=-1)
+        return probs.numpy()[0]
 
 
 ACTION_TO_PHASE = {0: 0, 1: 2}
@@ -435,6 +453,111 @@ def run_episode(agent, training=True):
 
 # Code pulled from: https://github.com/AArdaNalbant/Traffic-Signal-Modification-with-Webster-Method/blob/master/traffic_light_management_system/runner.py#L168
 # Modified to function soley for inference
+def analyze_policy_confidence(agent):
+    """
+    Analyze how confident/deterministic the agent's policy is.
+    A well-learned policy should have low entropy (confident decisions).
+    """
+    test_states = []
+    
+    # Generate various traffic scenarios
+    for i in range(20):
+        # Random but realistic traffic states
+        queues = np.random.randint(0, 15, 4)
+        lengths = queues * 5
+        waits = queues * 10
+        state = list(queues) + list(lengths) + list(waits) + [0]*4 + [float(i % 2 * 2), i/20.0]
+        test_states.append(state)
+    
+    # Check action distribution across states
+    action_probs = []
+    for state in test_states:
+        probs = agent.get_action_distribution(state)
+        action_probs.append(probs)
+    
+    action_probs = np.array(action_probs)
+    avg_entropy = -np.mean(np.sum(action_probs * np.log(action_probs + 1e-8), axis=1))
+    max_prob = np.mean(np.max(action_probs, axis=1))
+    
+    print(f"\nPolicy Confidence Analysis (20 test scenarios):")
+    print(f"  Average entropy: {avg_entropy:.4f} (lower = more confident)")
+    print(f"  Average max probability: {max_prob:.3f} (higher = more decisive)")
+    print(f"  Interpretation: {'✅ Confident policy' if max_prob > 0.7 else '⚠️  Uncertain policy'}")
+    
+    return max_prob > 0.7
+
+
+def verify_learning(agent):
+    """
+    Test if agent has learned meaningful patterns vs random behavior.
+    Checks if agent makes consistent, logical decisions on test scenarios.
+    """
+    print("\n" + "="*60)
+    print("LEARNING VERIFICATION TEST")
+    print("="*60)
+    
+    # Test scenario 1: Heavy North-South traffic
+    state_heavy_ns = [
+        10, 0, 0, 0,  # Halting: 10 cars north, 0 everywhere else
+        50, 0, 0, 0,  # Queue length
+        100, 0, 0, 0,  # Wait time
+        0, 0, 0, 0,   # Queue change
+        2.0, 0.5      # Phase 2 (EW green), long time since switch
+    ]
+    probs_heavy_ns = agent.get_action_distribution(state_heavy_ns)
+    
+    # Test scenario 2: Heavy East-West traffic
+    state_heavy_ew = [
+        0, 0, 10, 0,  # Halting: 10 cars east, 0 everywhere else
+        0, 0, 50, 0,  # Queue length
+        0, 0, 100, 0, # Wait time
+        0, 0, 0, 0,   # Queue change
+        0.0, 0.5      # Phase 0 (NS green), long time since switch
+    ]
+    probs_heavy_ew = agent.get_action_distribution(state_heavy_ew)
+    
+    # Test scenario 3: Balanced traffic
+    state_balanced = [
+        5, 5, 5, 5,   # Equal traffic
+        25, 25, 25, 25,
+        50, 50, 50, 50,
+        0, 0, 0, 0,
+        0.0, 0.2      # NS green, recent switch
+    ]
+    probs_balanced = agent.get_action_distribution(state_balanced)
+    
+    print("\nScenario 1: Heavy NORTH-SOUTH traffic, but light is E-W green")
+    print(f"  Action probabilities: NS green={probs_heavy_ns[0]:.3f}, EW green={probs_heavy_ns[1]:.3f}")
+    print(f"  Expected: Should prefer NS green (action 0)")
+    print(f"  Result: {'✅ LEARNED' if probs_heavy_ns[0] > 0.6 else '❌ NOT LEARNED'}")
+    
+    print("\nScenario 2: Heavy EAST-WEST traffic, but light is N-S green")
+    print(f"  Action probabilities: NS green={probs_heavy_ew[0]:.3f}, EW green={probs_heavy_ew[1]:.3f}")
+    print(f"  Expected: Should prefer EW green (action 1)")
+    print(f"  Result: {'✅ LEARNED' if probs_heavy_ew[1] > 0.6 else '❌ NOT LEARNED'}")
+    
+    print("\nScenario 3: Balanced traffic, recently switched to NS")
+    print(f"  Action probabilities: NS green={probs_balanced[0]:.3f}, EW green={probs_balanced[1]:.3f}")
+    print(f"  Expected: Should keep current (avoid thrashing)")
+    print(f"  Result: {'✅ LEARNED' if probs_balanced[0] > 0.55 else '⚠️  UNCERTAIN'}")
+    
+    # Calculate confidence score
+    learned_count = 0
+    if probs_heavy_ns[0] > 0.6: learned_count += 1
+    if probs_heavy_ew[1] > 0.6: learned_count += 1
+    if probs_balanced[0] > 0.55: learned_count += 1
+    
+    print(f"\n{'=' * 60}")
+    print(f"Learning Confidence: {learned_count}/3 scenarios show learned behavior")
+    if learned_count >= 2:
+        print("✅ Agent appears to have LEARNED meaningful patterns")
+    else:
+        print("❌ Agent may be relying on LUCK rather than learning")
+    print(f"{'=' * 60}\n")
+    
+    return learned_count >= 2
+
+
 def plot_results(episode_improvements, improvement, benchmark: str):
     # Plot learning curve
     num_episodes_actual = len(episode_improvements)
@@ -466,8 +589,8 @@ def plot_results(episode_improvements, improvement, benchmark: str):
 
 def main():
     ## Random seed for reproducibility
-    torch.manual_seed(42)
-    np.random.seed(42)
+    torch.manual_seed(15)
+    np.random.seed(15)
 
 
     print("Running baseline (fixed 200-step toggle)...")
@@ -487,14 +610,30 @@ def main():
     patience = 25  # Increased from 15 to allow more exploration
     no_improvement_count = 0
     best_episode = 0
+    
+    # Track learning progress
+    entropy_history = []
+    value_loss_history = []
 
     print(f"Training PPO agent for {NUM_EPISODES} episodes...\n")
+    print(f"{'Episode':<8} {'Wait Time':<12} {'vs Base':<10} {'vs Webster':<12} {'Policy Loss':<12} {'Value Loss':<12} {'Entropy':<10} {'Status'}")
+    print("-" * 100)
+    
     for ep in range(NUM_EPISODES):
         ep_wait = run_episode(agent, training=True)
         pct_b = ((baseline_wait - ep_wait) / baseline_wait) * 100
         pct_w = ((webster_wait - ep_wait) / webster_wait) * 100
         episode_improvements_b.append(pct_b)
         episode_improvements_w.append(pct_w)
+        
+        # Get learning diagnostics
+        policy_loss = agent.last_policy_loss if hasattr(agent, 'last_policy_loss') and agent.last_policy_loss else 0
+        value_loss = agent.last_value_loss if hasattr(agent, 'last_value_loss') and agent.last_value_loss else 0
+        entropy = agent.last_entropy if hasattr(agent, 'last_entropy') and agent.last_entropy else 0
+        
+        # Track metrics for analysis
+        entropy_history.append(entropy)
+        value_loss_history.append(value_loss)
 
         # Save best model and check for improvement
         if ep_wait < best_wait:
@@ -502,18 +641,14 @@ def main():
             best_episode = ep + 1
             no_improvement_count = 0
             torch.save(agent.network.state_dict(), f"best_model_ep{ep+1}.pt")
-            print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
-                  f"Wait: {ep_wait:>10.2f}s | "
-                  f"Per car: {ep_wait / 520:>7.2f}s | "
-                  f"vs Baseline: {pct_b:>+6.1f}% | "
-                  f"vs Webster : {pct_w:>+6.1f}% | ✓ NEW BEST")
+            status = "✓ NEW BEST"
+            print(f"{ep+1:<8} {ep_wait:>10.0f}s  {pct_b:>+6.1f}%   {pct_w:>+8.1f}%    "
+                  f"{policy_loss:>9.4f}    {value_loss:>9.4f}     {entropy:>6.4f}    {status}")
         else:
             no_improvement_count += 1
-            print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
-                  f"Wait: {ep_wait:>10.2f}s | "
-                  f"Per car: {ep_wait / 520:>7.2f}s | "
-                  f"vs Baseline: {pct_b:>+6.1f}% | "
-                  f"vs Webster : {pct_w:>+6.1f}% | (no improvement: {no_improvement_count}/{patience})")
+            status = f"({no_improvement_count}/{patience})"
+            print(f"{ep+1:<8} {ep_wait:>10.0f}s  {pct_b:>+6.1f}%   {pct_w:>+8.1f}%    "
+                  f"{policy_loss:>9.4f}    {value_loss:>9.4f}     {entropy:>6.4f}    {status}")
         
         # Early stopping check
         if no_improvement_count >= patience:
@@ -521,6 +656,33 @@ def main():
             print(f"   No improvement for {patience} consecutive episodes")
             print(f"   Best model was at episode {best_episode} with wait time: {best_wait:.2f}s")
             break
+    
+    # Analyze learning metrics
+    print("\n" + "="*60)
+    print("LEARNING ANALYSIS")
+    print("="*60)
+    
+    if len(entropy_history) > 10:
+        early_entropy = np.mean(entropy_history[:10])
+        late_entropy = np.mean(entropy_history[-10:])
+        entropy_change = ((early_entropy - late_entropy) / early_entropy) * 100
+        
+        print(f"Entropy (randomness in decisions):")
+        print(f"  Early episodes (1-10):  {early_entropy:.4f}")
+        print(f"  Late episodes:          {late_entropy:.4f}")
+        print(f"  Change: {entropy_change:+.1f}% {'(✅ more confident)' if entropy_change > 10 else '(⚠️  still random)'}")
+        
+    if len(value_loss_history) > 10:
+        early_vloss = np.mean(value_loss_history[:10])
+        late_vloss = np.mean(value_loss_history[-10:])
+        vloss_change = ((early_vloss - late_vloss) / early_vloss) * 100
+        
+        print(f"\nValue Loss (prediction accuracy):")
+        print(f"  Early episodes:  {early_vloss:.4f}")
+        print(f"  Late episodes:   {late_vloss:.4f}")
+        print(f"  Change: {vloss_change:+.1f}% {'(✅ better predictions)' if vloss_change > 10 else '(⚠️  not improving)'}")
+    
+    print("="*60)
 
 
     print("\nFinal evaluation (loading best model)...")
@@ -545,6 +707,20 @@ def main():
 
     torch.save(agent.network.state_dict(), "ppo_traffic_model.pt")
     print("\nBest model saved to ppo_traffic_model.pt")
+    
+    # Verify the agent actually learned patterns
+    agent.network.load_state_dict(torch.load(f"best_model_ep{best_episode}.pt"))
+    agent.network.eval()
+    has_learned = verify_learning(agent)
+    is_confident = analyze_policy_confidence(agent)
+    
+    if has_learned and is_confident:
+        print("\n✅ CONCLUSION: Agent demonstrates genuine learning")
+    elif has_learned or is_confident:
+        print("\n⚠️  CONCLUSION: Agent shows some learning but may benefit from more training")
+    else:
+        print("\n❌ CONCLUSION: Agent may be relying on luck rather than learned patterns")
+    
     plot_results(episode_improvements_b, improvement_baseline, "baseline")
     plot_results(episode_improvements_w, improvement_webster, "webster")
 
