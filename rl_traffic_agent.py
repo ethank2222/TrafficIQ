@@ -19,14 +19,14 @@ CONFIG_PATH = os.path.join("simulations", "Easy_4_Way", "map.sumocfg")
 TL_ID = "TCenter"
 LANES = ['NI_0', 'SI_0', 'EI_0', 'WI_0']
 
-STATE_DIM = 14
+STATE_DIM = 17
 ACTION_DIM = 2
 DECISION_INTERVAL = 10
 YELLOW_DURATION = 3
 NUM_EPISODES = 100
 GAMMA = 0.99
 LR = 3e-4
-CLIP_EPS = 0.15
+CLIP_EPS = 0.2
 PPO_EPOCHS = 4
 ENTROPY_COEF = 0.01
 VALUE_COEF = 0.5
@@ -138,16 +138,26 @@ def get_state():
     for lane in LANES:
         state.append(traci.lane.getLastStepHaltingNumber(lane))
     for lane in LANES:
-        state.append(traci.lane.getLastStepLength(lane))
+        # replaced stepLength
+        state.append(traci.lane.getLastStepMeanSpeed(lane))
+    for lane in LANES:
+        # replaced stepLength
+        state.append(traci.lane.getLastStepOccupancy(lane))
     for lane in LANES:
         state.append(traci.lane.getWaitingTime(lane))
     state.append(float(traci.trafficlight.getPhase(TL_ID)))
-    state.append(traci.simulation.getTime())
+    # state.append(traci.simulation.getTime())
     return state
 
 
 def get_wait_time():
     return sum(traci.lane.getWaitingTime(lane) for lane in LANES)
+
+
+def get_intermediate_reward(prev_wait):
+    curr_wait = get_wait_time()
+    delta_wait = prev_wait - curr_wait
+    return -curr_wait + 0.5 * delta_wait, curr_wait
 
 
 def run_baseline():
@@ -269,6 +279,7 @@ def run_episode(agent, training=True, sumo_config="sumo"):
     pending_phase = None
     current_green = 0
     accumulated_reward = 0.0
+    prev_wait = 0.0
 
     prev_state = None
     prev_action = None
@@ -309,7 +320,10 @@ def run_episode(agent, training=True, sumo_config="sumo"):
         traci.simulationStep()
         wait = get_wait_time()
         total_wait += wait
-        accumulated_reward += -wait
+
+        # Intermediate reward: negative wait + improvement delta vs previous step
+        step_reward, prev_wait = get_intermediate_reward(prev_wait)
+        accumulated_reward += step_reward
         step += 1
 
     if training and prev_state is not None:
