@@ -51,17 +51,26 @@ For qualitative assessment, we evaluated the model against three behavioral crit
  
 Throughout development, we validated our model by reviewing recordings of it in action, observing its responses to incoming traffic, current queue state, and active light phase.
 
-ADD VIDEO OF 10 EPOCHS TRAINED MODEL
+<video width="480" height="280" controls>
+  <source src="assets/videos/early_agent.mp4" type="video/mp4">
+  Your browser does not support the video tag. 
+</video>
 
 These reviews surfaced several flaws in our environment setup. First, mean vehicle length proved largely redundant, nearly all vehicles in the simulation share similar dimensions with negligible impact on model behavior. In recognition of this, we removed it from our model's environment variables. Second, earlier iterations showed little awareness of traffic flow, frequently producing stop-and-go light patterns rather than sustained lane clearance.
  
 To address this, we introduced **Mean Speed** as an observation feature. The effect was immediate: rather than reacting to static queue snapshots, the agent began prioritizing lane throughput and avoiding unnecessary phase changes. This paired naturally with **Occupancy**, which together provide a dynamic picture of lane congestion that neither variable captures alone.
 
-ADD VIDEO OF WEBSTERS 
+<video width="480" height="280" controls>
+  <source src="assets/videos/webster.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 We also cross-validated our model against **Webster's Method**, a more sophisticated adaptive signal control algorithm. Observing its behavior in simulation, we noted strong performance across all three qualitative criteria, especially fairness. It reliably cleared backed-up lanes while remaining responsive to demand on the perpendicular lane. We used this behavior as a reference point and introduced intermediate rewards alongside the **Occupancy** feature, with the goal of steering our model toward the same balance of fairness and attentiveness that Webster's demonstrates.
 
-ADD VIDEO OF TRAINED MODEL 100 EPOCHS
+<video width="480" height="280" controls>
+  <source src="assets/videos/agent.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 This culminated in our final model seen above. Despite exceeding our initial performance target, we identified two remaining behavioral issues:
 

@@ -33,8 +33,10 @@ def run_simulation(controller: str):
             baseline(sumo_config)
         case 'webster':
             webster(sumo_config)
-        case 'ai':
-            ai(sumo_config)
+        case 'good_ai':
+            ai(modelpath=f"ppo_10e.pt", sumo_config=sumo_config)
+        case 'bad_ai':
+            ai(modelpath=f"ppo_traffic_agent.pt", sumo_config=sumo_config)
         case _:
             print("Not a valid controller")
     sys.stdout.flush()
@@ -151,14 +153,13 @@ def webster(sumo_config='sumo-gui'):
     traci.close()
 
 
-def ai(sumo_config='sumo-gui'):
+def ai(modelpath, sumo_config='sumo-gui'):
     model = PPOAgent()
-    modelpath = "model_run002_20260302_233451.pt"
     state_dict = torch.load(modelpath, map_location=torch.device('cpu'))
     model.network.load_state_dict(state_dict)  
     model.network.eval()                        
     run_episode(agent=model, training=False, sumo_config=sumo_config)
 
 if __name__ == "__main__":
-    run_simulation('ai')
+    run_simulation('webster')
     # run_simulation('baseline')
