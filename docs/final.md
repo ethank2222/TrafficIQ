@@ -77,6 +77,8 @@ This culminated in our final model seen above. Despite exceeding our initial per
 Though we did not have the time to implement formal solutions, we have possible solutions for next steps. To address **lane bias**, we propose a scaling negative reward tied to the occupancy of the perpendicular lane, growing in magnitude as that lane's congestion increases, nudging the agent toward fairness. To combat **phase instability**, a small fixed penalty applied to every yellow phase transition would discourage unnecessary switching without blocking legitimate phase changes.
 
 ### Quantitative Results
+**All graphs begin at episode 1, they do NOT track random behavior before any training is started**
+
 For quantitative assessment, we evaluated the model against three metrics:
  
 - **Average Waiting Time**: The average time, in seconds, a vehicle spent stopped at the intersection
