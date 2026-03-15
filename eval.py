@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 import rl_traffic_agent as agent_module
 from rl_traffic_agent import (
-    PPOAgent, run_episode, run_baseline, run_webster, NUM_EPISODES
+    PPOAgent, run_episode, run_baseline, NUM_EPISODES
 )
 
 NUM_CARS = 520
@@ -22,19 +22,19 @@ import traci
 
 
 HYPERPARAMS = {
-    "GAMMA":        [0.90, 0.95, 0.99],
+    # "GAMMA":        [0.90, 0.95, 0.99],
     "LR":           [1e-3, 1e-4, 1e-5],
-    "CLIP_EPS":     [0.05, 0.1,  0.2],
-    "PPO_EPOCHS":   [2,    4,    8],
-    "ENTROPY_COEF": [0.001, 0.01, 0.05],
-    "VALUE_COEF":   [0.25, 0.5,  1.0],
+    # "CLIP_EPS":     [0.1, 0.15,  0.2],
+    # "PPO_EPOCHS":   [2,    4,    8],
+    # "ENTROPY_COEF": [0.001, 0.01, 0.05],
+    # "VALUE_COEF":   [0.25, 0.5,  1.0],
 }
 
 # Defaults as defined in rl_traffic_agent.py
 DEFAULTS = {
     "GAMMA":        0.99,
-    "LR":           1e-5,
-    "CLIP_EPS":     0.1,
+    "LR":           1e-4,
+    "CLIP_EPS":     0.2,
     "PPO_EPOCHS":   4,
     "ENTROPY_COEF": 0.01,
     "VALUE_COEF":   0.5,
@@ -65,7 +65,7 @@ def moving_avg(data, window=10):
     return [np.mean(data[max(0, i - window + 1):i + 1]) for i in range(len(data))]
 
 
-def plot_param(param, values, results, baseline_wait, webster_wait, timestamp):
+def plot_param(param, values, results, baseline_wait, timestamp):
     """
     Two-panel figure for one hyperparameter:
       Left  — learning curves (improvement % per episode)
@@ -124,9 +124,9 @@ def main():
     baseline_wait = run_baseline()
     print(f"Baseline: {baseline_wait:.2f}s ({baseline_wait/NUM_CARS:.2f}s/car)\n")
 
-    print("Running Webster...")
-    webster_wait = run_webster()
-    print(f"Webster:  {webster_wait:.2f}s ({webster_wait/NUM_CARS:.2f}s/car)\n")
+    # print("Running Webster...")
+    # webster_wait = run_webster()
+    # print(f"Webster:  {webster_wait:.2f}s ({webster_wait/NUM_CARS:.2f}s/car)\n")
 
     csv_rows = []
 
@@ -144,21 +144,21 @@ def main():
             param_results[val] = (ep_waits, eval_wait)
 
             pct_b = (baseline_wait - eval_wait) / baseline_wait * 100
-            pct_w = (webster_wait  - eval_wait) / webster_wait  * 100
+            # pct_w = (webster_wait  - eval_wait) / webster_wait  * 100
             csv_rows.append({
                 "param": param, "value": val,
                 "eval_wait": round(eval_wait, 2),
                 "pct_vs_baseline": round(pct_b, 2),
-                "pct_vs_webster":  round(pct_w, 2),
+                # "pct_vs_webster":  round(pct_w, 2),
                 "is_default": val == DEFAULTS[param],
             })
 
-        plot_param(param, values, param_results, baseline_wait, webster_wait, timestamp)
+        plot_param(param, values, param_results, baseline_wait, timestamp)
 
     # Save CSV
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["param", "value", "eval_wait",
-                                               "pct_vs_baseline", "pct_vs_webster", "is_default"])
+                                               "pct_vs_baseline", "is_default"])
         writer.writeheader(); writer.writerows(csv_rows)
     print(f"\nResults saved → {csv_path}")
 

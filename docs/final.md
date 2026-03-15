@@ -39,9 +39,6 @@ Key elements of the system:
 - **Model**: PPO actor-critic with two shared 64-unit Tanh layers and separate actor/critic heads, trained for 100 episodes with on-policy updates (4 epochs per episode).
 
 ## Evaluation
-**Description DELETE LATER**
-An important aspect of your project is evaluation. Be clear and precise about describing the evaluation setup, for both quantitative and qualitative results. Present the results to convince the reader of the effort that you’ve made to solve the problem, and to what extent you can claim that you succeeded. Use plots, charts, tables, screenshots, figures, etc. as appropriate. For each type of evaluation that you perform, you’ll likely need at least a paragraph or two (excluding figures etc.) to describe it.
-
 ### Qualitative Results
 For qualitative assessment, we evaluated the model against three behavioral criteria:
  
@@ -77,9 +74,32 @@ This culminated in our final model seen above. Despite exceeding our initial per
 - **Lane bias**: The agent places excessive weight on clearing the active lane, sometimes at the expense of the perpendicular approach
 - **Phase instability**: The agent switches lights unnecessarily when lanes are lightly occupied
 
-Though we did not have the time to implement formal soluations, we have possible solutions for next steps. To address **lane bias**, we propose a scaling negative reward tied to the occupancy of the perpendicular lane, growing in magnitude as that lane's congestion increases, nudging the agent toward fairness. To combat **phase instability**, a small fixed penalty applied to every yellow phase transition would discourage unnecessary switching without blocking legitimate phase changes.
+Though we did not have the time to implement formal solutions, we have possible solutions for next steps. To address **lane bias**, we propose a scaling negative reward tied to the occupancy of the perpendicular lane, growing in magnitude as that lane's congestion increases, nudging the agent toward fairness. To combat **phase instability**, a small fixed penalty applied to every yellow phase transition would discourage unnecessary switching without blocking legitimate phase changes.
 
 ### Quantitative Results
+For quantitative assessment, we evaluated the model against three metrics:
+ 
+- **Average Waiting Time**: The average time, in seconds, a vehicle spent stopped at the intersection
+- **Training Convergence**: How consistently the model improved over the course of training
+- **Training Variance**: How stable the model's performance was across episodes
+ 
+In earlier iterations, we observed especially high variance between runs. Noisy policy-destabilizing behavior that produced wildly inconsistent final evaluations. To address this, we conducted a sweep over key hyperparameters.
+ 
+<img src="./assets/graphs/sweep_GAMMA_20260315_132832.png" alt="GAMMA SWEEP" class="home-image">
+ 
+First, we targeted **Gamma** — a parameter controlling how much the agent weighs future rewards relative to immediate ones. A value of 0.9 was discarded early due to a large initial performance deficit, higher variance, and weaker final results. Values of 0.95 and 0.99 were broadly comparable, with 0.99 earning the edge through both lower training variance and a better final evaluated waiting time.
+ 
+<img src="./assets/graphs/sweep_LR_20260302_234934.png" alt="LR SWEEP" class="home-image">
+ 
+Second, we targeted **Learning Rate** — the step size of each gradient descent update. A value of 1e-5 was an immediate outlier, exhibiting excessive training variance and poor final performance. Values of 1e-4 and 1e-3 showed similar convergence behavior and variance, but diverged meaningfully in final evaluated waiting time. Given its superior final performance, 1e-3 was selected.
+ 
+<img src="./assets/graphs/sweep_CLIP_EPS_20260315_132832.png" alt="CLIP EPS SWEEP" class="home-image">
+ 
+Finally, we evaluated **Clip Epsilon**. This parameter, unique to PPO,controls the maximum allowable policy change per update. Performance across tested values was largely comparable across all three metrics, and we opted to retain the standard default of 0.2 common to most PPO implementations.
+
+<img src="./assets/graphs/training_progress.png" alt="CLIP EPS SWEEP" class="home-image">
+
+With hyperparameters settled, we turned to reward shaping to further improve training convergence. We experimented with intermediate rewards, differential fairness penalties, and weight adjustments. Our findings were broadly comparable performance across approaches. The marginal exception was intermediate rewards, which produced a modest but consistent reduction in training variance. Though some noise persists in the final model, it reliably extracts signal over the course of training and comfortably exceeds our baseline by **36.8%**.
 
 ## Resources Used
 **Simulation and control APIs**

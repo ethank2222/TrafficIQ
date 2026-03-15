@@ -25,7 +25,7 @@ DECISION_INTERVAL = 10
 YELLOW_DURATION = 3
 NUM_EPISODES = 100
 GAMMA = 0.99
-LR = 3e-4
+LR = 1e-3
 CLIP_EPS = 0.2
 PPO_EPOCHS = 4
 ENTROPY_COEF = 0.01
@@ -335,23 +335,29 @@ def run_episode(agent, training=True, sumo_config="sumo"):
     return total_wait
 
 
-def plot_results(episode_improvements, improvement, benchmark: str):
-    # Plot learning curve
-    plt.figure(figsize=(10, 6))
-    plt.plot(range(1, NUM_EPISODES + 1), episode_improvements, alpha=0.3, label='Raw Episodes')
-
-    # Add moving average to show trend
-    window = min(10, NUM_EPISODES // 5)
-    if NUM_EPISODES >= window:
-        moving_avg_b = []
-        moving_avg_w = []
-        for i in range(len(episode_improvements)):
-            start = max(0, i - window + 1)
-            moving_avg_b.append(np.mean(episode_improvements[start:i+1]))
-        plt.plot(range(1, NUM_EPISODES + 1), moving_avg_b, linewidth=2, label=f'{window}-Episode Moving Avg')
+def plot_results(all_runs_improvements, all, best, worse, benchmark: str):
+    plt.figure(figsize=(5, 6))
+    
+    all_runs = np.array(all_runs_improvements)  # shape: (10, NUM_EPISODES)
+    episodes = range(1, NUM_EPISODES + 1)
+    
+    # Plot individual runs (slightly transparent)
+    for run in all_runs:
+        plt.plot(episodes, run, alpha=0.2, color='steelblue', linewidth=1)
+    
+    # Plot average across all runs
+    avg_performance = np.mean(all_runs, axis=0)
+    plt.plot(episodes, avg_performance, color='steelblue', linewidth=2.5, label='Average (10 runs)')
 
     plt.axhline(y=30, color='r', linestyle='--', label='30% Target')
-    plt.axhline(y=improvement, color='g', linestyle='--', label=f'{benchmark} Eval: {improvement:.1f}%')
+
+    avg_improvement = np.mean(all)
+    min_improvement = np.min(worse)
+    max_improvement = np.max(best)
+
+    plt.axhline(y=avg_improvement, color='g', linestyle='--', label=f'{benchmark} Avg Eval: {avg_improvement:.1f}%')
+    plt.axhline(y=min_improvement, color='orange', linestyle=':', linewidth=1.5, label=f'{benchmark} Min Eval: {min_improvement:.1f}%')
+    plt.axhline(y=max_improvement, color='purple', linestyle=':', linewidth=1.5, label=f'{benchmark} Max Eval: {max_improvement:.1f}%')
 
     plt.xlabel('Episode', fontsize=12)
     plt.ylabel(f'Improvement vs {benchmark} (%)', fontsize=12)
@@ -368,47 +374,64 @@ def main():
     baseline_wait = run_baseline()
     print(f"Baseline: {baseline_wait:.2f}s total | {baseline_wait / 520:.2f}s per car\n")
 
-    print("Running Websters...")
-    webster_wait = run_webster()
-    print(f"Webster: {webster_wait:.2f}s total | {webster_wait / 520:.2f}s per car\n")
+    # print("Running Websters...")
+    # webster_wait = run_webster()
+    # print(f"Webster: {webster_wait:.2f}s total | {webster_wait / 520:.2f}s per car\n")
     
     agent = PPOAgent()
-    episode_improvements_b = []
-    episode_improvements_w = []
+    all_episode_improvements_b = []
+    # all_episode_improvements_w = []
+    all_final = []
+    best_peformance = -200.
+    worst_peformance = 200.
+    for i in range(5):
+        print(f"FULL RUN: {i}")
+        print(f"Training PPO agent for {NUM_EPISODES} episodes...\n")
+        episode_improvements_b = []
+        # episode_improvements_w = []
+        for ep in range(NUM_EPISODES):
+            ep_wait = run_episode(agent, training=True)
+            pct_b = ((baseline_wait - ep_wait) / baseline_wait) * 100
+            # pct_w = ((webster_wait - ep_wait) / webster_wait) * 100
+            episode_improvements_b.append(pct_b)
+            # episode_improvements_w.append(pct_w)
+            print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
+                f"Wait: {ep_wait:>10.2f}s | "
+                f"Per car: {ep_wait / 520:>7.2f}s | "
+                f"vs Baseline: {pct_b:>+6.1f}% | ")
+                # f"vs Webster : {pct_w:>+6.1f}%")
 
-    print(f"Training PPO agent for {NUM_EPISODES} episodes...\n")
-    for ep in range(NUM_EPISODES):
-        ep_wait = run_episode(agent, training=True)
-        pct_b = ((baseline_wait - ep_wait) / baseline_wait) * 100
-        pct_w = ((webster_wait - ep_wait) / webster_wait) * 100
-        episode_improvements_b.append(pct_b)
-        episode_improvements_w.append(pct_w)
-        print(f"  Episode {ep + 1:>2}/{NUM_EPISODES} | "
-              f"Wait: {ep_wait:>10.2f}s | "
-              f"Per car: {ep_wait / 520:>7.2f}s | "
-              f"vs Baseline: {pct_b:>+6.1f}% | "
-              f"vs Webster : {pct_w:>+6.1f}%")
 
+        print("\nFinal evaluation (no training)...")
+        eval_wait = run_episode(agent, training=False)
+        improvement_baseline = ((baseline_wait - eval_wait) / baseline_wait) * 100
+        # improvement_webster = ((webster_wait - eval_wait) / webster_wait) * 100
 
-    print("\nFinal evaluation (no training)...")
-    eval_wait = run_episode(agent, training=False)
-    improvement_baseline = ((baseline_wait - eval_wait) / baseline_wait) * 100
-    improvement_webster = ((webster_wait - eval_wait) / webster_wait) * 100
+        print(f"\n{'=' * 60}")
+        print(f"RESULTS")
+        print(f"  Baseline:    {baseline_wait:>12.2f}s  ({baseline_wait / 520:.2f}s/car)")
+        # print(f"  Webster :    {webster_wait:>12.2f}s  ({webster_wait / 520:.2f}s/car)")
+        print(f"  PPO Agent:   {eval_wait:>12.2f}s  ({eval_wait / 520:.2f}s/car)")
+        print(f"  Improvement over Baseline: {improvement_baseline:>+11.1f}%")
+        # print(f"  Improvement over Webster : {improvement_webster:>+11.1f}%")
+        print(f"  Target:              30%")
+        print(f"{'=' * 60}")
+        all_final.append(improvement_baseline)
 
-    print(f"\n{'=' * 60}")
-    print(f"RESULTS")
-    print(f"  Baseline:    {baseline_wait:>12.2f}s  ({baseline_wait / 520:.2f}s/car)")
-    print(f"  Webster :    {webster_wait:>12.2f}s  ({webster_wait / 520:.2f}s/car)")
-    print(f"  PPO Agent:   {eval_wait:>12.2f}s  ({eval_wait / 520:.2f}s/car)")
-    print(f"  Improvement over Baseline: {improvement_baseline:>+11.1f}%")
-    print(f"  Improvement over Webster : {improvement_webster:>+11.1f}%")
-    print(f"  Target:              30%")
-    print(f"{'=' * 60}")
+        if improvement_baseline > best_peformance:
+            best_peformance = improvement_baseline
+            print(f"Iteration {i} best.")
+            torch.save(agent.network.state_dict(), "ppo_traffic_model.pt")
+            print("\nModel saved to ppo_traffic_model.pt")
+        # kept as seperate if just to cover base case of first iteration being worst
+        if improvement_baseline < worst_peformance:
+            worst_peformance = improvement_baseline
+            print(f"Iteration {i} worse.")
 
-    torch.save(agent.network.state_dict(), "ppo_traffic_model.pt")
-    print("\nModel saved to ppo_traffic_model.pt")
-    plot_results(episode_improvements_b, improvement_baseline, "baseline")
-    plot_results(episode_improvements_w, improvement_webster, "webster")
+        all_episode_improvements_b.append(episode_improvements_b)
+        # all_episode_improvements_w.append(episode_improvements_w)    
+    plot_results(all_episode_improvements_b, all_final, best_peformance, worst_peformance, "baseline")
+    # plot_results(all_episode_improvements_w, improvement_webster, "webster")
 
 
 if __name__ == "__main__":
