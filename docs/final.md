@@ -24,6 +24,25 @@ Write a couple of paragraphs summarizing the motivation and goals of the project
 ## Evaluation
 **Description DELETE LATER**
 An important aspect of your project is evaluation. Be clear and precise about describing the evaluation setup, for both quantitative and qualitative results. Present the results to convince the reader of the effort that you’ve made to solve the problem, and to what extent you can claim that you succeeded. Use plots, charts, tables, screenshots, figures, etc. as appropriate. For each type of evaluation that you perform, you’ll likely need at least a paragraph or two (excluding figures etc.) to describe it.
+### Qualitative Results
+ADD VIDEO OF TRAINED MODEL 10 EPOCHS
+ADD VIDEO OF TRAINED MODEL 100 EPOCHS
+For qualitative assessment, we evaluated the model against three behavioral criteria:
+- Fairness: No lane starvation
+    - All approaches are served within a reasonable time window
+- Stability: No excessive or rapid phase switching that wastes green time on yellow transitions
+- Adaptivity: Phase decisions that respond to live traffic conditions rather than following a fixed pattern
+
+Throughout development, we validated our model by reviewing recordings of it in actio, observing its responses to incoming traffic, current queue state, and active light phase.
+
+These reviews surfaced several flaws in our environment setup. First, mean vehicle length proved largely redundant, as nearly all vehicles in the simulation share similar dimensions with negligible variation in how they influence model behavior. We removed it accordingly. Second, earlier model iterations showed little awareness of traffic flow, frequently producing stop-and-go light patterns rather than sustained lane clearance.
+To address this, we introduced two new observation features: **Mean Speed** and **Occupancy**. The effect was immediate, rather than reacting to static queue snapshots, the agent began actively prioritizing lane throughput and avoiding unnecessary light changes.
+ADD VIDEO OF TRAINED MODEL 100 EPOCHS
+
+
+ADD VIDEO OF WEBSTER ALGORITHIM
+We as well attempted to capture the behavior seen in more refined algorithims such as websters. 
+### Quantitative Results
 
 ## Resources Used
 **Description DELETE LATER**
