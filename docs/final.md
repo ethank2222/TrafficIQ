@@ -4,18 +4,9 @@ title: Final Report
 ---
 
 ## Video
-- ~3 mins
-    - HARD MAX 4 mins
-- Brief problem description:
-    - include images, screenshots, etc
-- Before and after training peformance (I can supply the videos for this - Erick)
-- Include failure modes
-    - Not sure how we'll do this?
-    - Maybe talk about models undesirable behaviors
-        - Over prioritizing clearing certain lanes
-        - Switches somewhat too often (wasted time on yellow)
-- Summary of Approach + Future Ideas
-    - p.much what we did for our presentation :P
+<div style="text-align: center; margin: 20px 0;">
+  <iframe width="560" height="315" src="https://www.youtube.com/watch?v=bgbMiQUB1iU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ## Project Summary
 Traffic patterns change constantly, and the current implementations of turn signals often waste green time while cars pile up elsewhere. These delays add up, and a BestLife Online study reports the average American spends **58.6 hours per year** waiting at red lights. Even small improvements in signal control can therefore save a lot of time across a city.
