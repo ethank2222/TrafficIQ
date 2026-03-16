@@ -82,7 +82,7 @@ In earlier iterations, we observed especially high variance between runs. Noisy 
  
 First, we targeted **Gamma** — a parameter controlling how much the agent weighs future rewards relative to immediate ones. A value of 0.9 was discarded early due to a large initial performance deficit, higher variance, and weaker final results. Values of 0.95 and 0.99 were broadly comparable, with 0.99 earning the edge through both lower training variance and a better final evaluated waiting time.
  
-<img src="./assets/graphs/sweep_LR_20260302_234934.png" alt="LR SWEEP" class="home-image">
+<img src="./assets/graphs/sweep_LR.png" alt="LR SWEEP" class="home-image">
  
 Second, we targeted **Learning Rate** — the step size of each gradient descent update. A value of 1e-5 was an immediate outlier, exhibiting excessive training variance and poor final performance. Values of 1e-4 and 1e-3 showed similar convergence behavior and variance, but diverged meaningfully in final evaluated waiting time. Given its superior final performance, 1e-3 was selected.
  
@@ -113,3 +113,4 @@ With hyperparameters settled, we turned to reward shaping to further improve tra
 **AI tool usage (comprehensive)**
 - Anthropic Claude/ChatGPT: Early template code for the rl traffic agent
 - Anthropic Claude: LATEX syntax for status.md
+- Anthropic Claude: Writing revisions to clean up writing style for status.md and final.md
